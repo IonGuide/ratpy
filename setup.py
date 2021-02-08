@@ -9,23 +9,29 @@ setup(name='ratpy',
       description = 'An interpreter and visualiser of RATS files',
       author = 'Steve Ayrton',
       author_email = 's.t.ayrton@icloud.com',
-      licence='MIT',
       classifiers=[  # Optional
         # How mature is this project? Common values are
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
-        'License :: OSI Approved :: MIT License',
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Waters Employees/Academic R&D',
+        'Topic :: Mass Spectrometry Development',
         'Programming Language :: Python :: 3.7'
     ],
-
+      license = "BSD",
       packages=find_packages(),
-      install_requires=['pandas','dash','plotly_express','plotly','numpy','dash_bootstrap_components','beautifulsoup4','pyarrow','dash-uploader'],
-      python_requires='>=3.6'
-
+      install_requires=['pandas>=1.2.1',
+                        'dash>=1.19.0',
+                        'plotly_express>=0.4.1',
+                        'plotly>=4.14.3',
+                        'numpy>=1.19.5',
+                        'dash_bootstrap_components>=0.11.1',
+                        'beautifulsoup4>=4.9.3',
+                        'pyarrow>=3.0.0',
+                        'dash-uploader>=0.4.1'],
+      python_requires='>=3.7',
+      URL = 'https://github.com/IonGuide/ratpy'
 )
 
 
