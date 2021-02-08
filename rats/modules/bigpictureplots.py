@@ -8,6 +8,7 @@ import plotly_express as px
 def bigpictureplot(df,timescale=1000000):
     df = df[['function','packet', 'llc', 'anomalous', 'time']]
     df.drop_duplicates(subset = ['llc','anomalous'],inplace=True)
+    df.reset_index(drop=True,inplace=True)
     df.loc[:,'colours'] = np.where(df['anomalous'] == 0, 'blue', 'red')
     df.loc[:,'timescale'] = timescale
     df.loc[:,'time'] = df['time']/df['timescale']
