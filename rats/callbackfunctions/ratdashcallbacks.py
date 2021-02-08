@@ -104,20 +104,20 @@ def plotbank(replot, bigpictureclickdata,file,scans,bigpictureplot):
         raise PreventUpdate
 
     try:
-        print('plotbank tried to load figures')
         # try to load figures from storage
         with open(str(packagepath) + figurepath + f'{file}_ratdashfigures.pickle', 'rb') as f:
             figs = pickle.load(f)
+        print('plotbank loaded figures')
 
     except:
-        print('plotbank tried to create figures from scratch')
         # if there are no figures in storage, make them and save them
         df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
 
         print(df.head())
         bp = bigpictureplots.bigpictureplot(df)
-        s  = scopeplots.scopeplot(df)
+        s  = scopeplots.scopeplot(df,buffer=scans)
         figs = dict(bigpictureplot=bp, scopeplot=s)
+        print('plotbank created figures from scratch')
 
     #========================================================
     # PLOT LINKAGES
@@ -142,7 +142,6 @@ def plotbank(replot, bigpictureclickdata,file,scans,bigpictureplot):
     else:
         with open(str(packagepath) +figurepath + f'{file}_ratdashfigures.pickle', 'wb') as f:
             pickle.dump(figs, f)
-
 
     return figs['bigpictureplot'],figs['scopeplot']
 

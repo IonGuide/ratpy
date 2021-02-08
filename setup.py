@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
-long_description = (here / 'README.md').read_text(encoding='utf-8')
+long_description = "run with python -c 'impoort rats'"
 
 setup(name='ratpy',
-      version = '1.0.0.dev4',
+      version = '1.0.0.dev5',
       description = 'An interpreter and visualiser of RATS files',
       author = 'Steve Ayrton',
       author_email = 's.t.ayrton@icloud.com',
