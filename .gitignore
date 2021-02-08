@@ -1,0 +1,5 @@
+/dist/
+/ratpy.egg-info/
+/build/
+/.idea/
+/venv/
