@@ -12,6 +12,7 @@ def scopeplot(df,llc=0,buffer=1, facet=False,timescale=1000000):
     df['function'] = df['function'].astype('int')
     #create slice along the LLC dimension. This is more sensible than simply taking a packet-wise approach from the perspective of the user
     df = df[(df['llc'] >= start) & (df['llc'] <=end)]
+    df.reset_index(drop=True,inplace=True)
     df.loc[:,'timescale'] = timescale
     df.loc[:,'time'] = df['time']/df['timescale']
 
