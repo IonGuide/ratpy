@@ -5,7 +5,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(name='ratpy',
-      version = '1.0.0.dev3',
+      version = '1.0.0.dev4',
       description = 'An interpreter and visualiser of RATS files',
       author = 'Steve Ayrton',
       author_email = 's.t.ayrton@icloud.com',
