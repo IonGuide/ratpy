@@ -15,8 +15,8 @@ setup(name='ratpy',
         #   4 - Beta
         #   5 - Production/Stable
         'Development Status :: 4 - Beta',
-        'Intended Audience :: Waters Employees/Academic R&D',
-        'Topic :: Mass Spectrometry Development',
+        'Intended Audience :: Other Audience',
+        'Topic :: Scientific/Engineering',
         'Programming Language :: Python :: 3.7'
     ],
       license = "BSD",
