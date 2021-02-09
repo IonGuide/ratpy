@@ -4,13 +4,14 @@ import plotly_express as px
 
 def interscanplot(df,timescale=1000000):
 
-    df = df[['function','time','llc']].drop_duplicates()
+    df = df[['function','time','llc','board']].drop_duplicates()
     df = df.set_index(['function','llc']).diff()
     df = df.reset_index()
     df=df.iloc[1:] # the first value here will be 0 as this is a diff function which basically shifts them all in a particular direction
     df = df.sort_values('function',ascending=False)
+    title = df['board'].astype('str').unique()[0]
 
-    fig = px.violin(df,x='time',y='function',color='function',orientation='h').update_traces(side='positive',width=2.5)
+    fig = px.violin(df,x='time',y='function',color='function',orientation='h',title=title).update_traces(side='positive',width=2.5)
     fig.update_yaxes(type='category')
     fig.update_layout(plot_bgcolor='#fff')
 

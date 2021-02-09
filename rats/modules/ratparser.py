@@ -1,5 +1,13 @@
 import pandas as pd
+import rats.modules.topoparser as topo
+import platform
+import pathlib
 
+if platform.system() == 'Windows':
+    splitchar = '\\'
+else:
+    splitchar = '/'
+packagepath = pathlib.Path(__file__).parent.parent.resolve()
 
 class RatParse():
 
@@ -282,7 +290,7 @@ class RatParse():
 
         # =============================================================================================================
         #   Find outliers
-        ##=============================================================================================================
+        # =============================================================================================================
         print('ratparser is finding outliers')
         df = df.set_index(['llc', 'packet', 'function', 'cycle', 'time', 'edb', 'scanflag']).sort_index()
         try:
@@ -312,9 +320,38 @@ class RatParse():
 
         df = catcols(df,cols)
 
+        # =============================================================================================================
+        #   Scaling the data.. will import a topo parsing function, then run it on a unique list of EDBs...
+        #   Want the code to rename the edbs to relevant data and scale the data values according to some factor
+        # =============================================================================================================
+        try:
+            netid = self.filename.split('.')[0] #everything before the extension
+            netid = str(netid.split(splitchar)[-1:][0])
+            print(netid)
+            edbs = list(df['edb'].unique())
+            print(edbs)
+
+
+            topodata = topo.extractscale(netid,edbs)
+            print(topodata[1])
+
+            edbdata = topodata[0]
+            df.loc[:,'min'] = df['edb'].map(edbdata['min'])
+            df.loc[:,'unit'] = df['edb'].map(edbdata['units'])
+            df.loc[:,'scale'] = df['edb'].map(edbdata['scalingfactor'])
+
+            df.loc[:,'edb'] = df['edb'].map(edbdata['descriptions']) # replace edb with description rather than vague
+            df.loc[:,'data'] = df['min'] + (df['data']*df['scale'])  # replace data with appropriate value
+            df.loc[:,'board'] = topodata[1]
+            df['board'] = df['board'].astype('category')
+        except:
+            df['board'] = 'NO MATCH FOUND IN TOPO FILES'
+
         #==============================================================================================================
         print(f'Dataframe construction completed in: {datetime.now() - startTime}')
         print(f'dataframe for {self.filename} uses {df.memory_usage().sum()/10e6} Mb in memory')
+
+        print(df.head())
 
         return df
 
@@ -396,8 +433,8 @@ def testverification(absolutepath,file):
 #================================================
 scopestart = 10
 scopeend = 100
-file = 'RATS simulation 1595852200 description.txt'
-# test_case(f'/users/steve/documents/workwaters/{file}',file,scopestart,scopeend,show=False)
+file = '5.txt'
+# test_case(f'/users/steve/documents/workwaters/{file}',file,scopestart,scopeend,show=True)
 # testverification(f'/users/steve/documents/workwaters/{file}',file)
 
 
