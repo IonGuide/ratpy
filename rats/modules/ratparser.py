@@ -325,12 +325,12 @@ class RatParse():
         #   Want the code to rename the edbs to relevant data and scale the data values according to some factor
         # =============================================================================================================
         try:
-            netid = self.filename.split('.')[0] #everything before the extension
-            netid = str(netid.split(splitchar)[-1:][0])
+
+            netid = self.filename.split(splitchar)[-1]
+            netid = netid.split('.')[0] #everything before the extension
             print(netid)
             edbs = list(df['edb'].unique())
             print(edbs)
-
 
             topodata = topo.extractscale(netid,edbs)
             print(topodata[1])

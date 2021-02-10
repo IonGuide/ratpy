@@ -12,7 +12,13 @@ packagepath = pathlib.Path(__file__).parent.parent.resolve()
 
 def extractscale(netid, edblist):
     edblist.remove(31)
-    with open(str(packagepath) + topopath + 'NETWORK_PEREGRINE_BETA_Nov142017.xml', 'r') as f:
+    ## need to organically identify the topo file
+    import os
+    for filename in os.listdir(str(packagepath) + topopath):
+        if 'NETWORK' in filename and 'xml' in filename:
+            topofile = filename
+
+    with open(str(packagepath) + topopath + topofile, 'r') as f:
         content = f.readlines()
         content = "".join(content)
         soup = bs(content, 'lxml')

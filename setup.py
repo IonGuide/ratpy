@@ -5,7 +5,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = "run with python -c 'impoort rats'"
 
 setup(name='ratpy',
-      version = '1.0.0.dev7',
+      version = '1.0.0.dev9',
       description = 'An interpreter and visualiser of RATS files',
       author = 'Steve Ayrton',
       author_email = 's.t.ayrton@icloud.com',
