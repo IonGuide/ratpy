@@ -358,27 +358,28 @@ def populatetoporeport():
     import os
     for filename in os.listdir(str(packagepath)+topopath):
         print(filename)
-        topology = {}
-        if filename == '__init__.py':
-            pass
-        elif 'NETWORK' in filename:
-            topology['filename'] = filename
-            topology['device'] = 'Instrument Topo File'
-            topodict.append(topology)
-        else:
-            with open(str(packagepath)+ topopath + filename, 'r') as f:
-                content = f.readlines()
-            content = "".join(content)
-            soup = bs(content, 'lxml')
-            device = soup.find('de:device')
-            topology['filename'] = filename
-            topology['device'] = f'EDS for {device["instancename"]}'
-            topodict.append(topology)
-    topodf = pd.DataFrame(topodict)
-    children = dash_table.DataTable(
-        id='topotable',
-        columns=[{"name": i, "id": i} for i in topodf.columns],
-        data=topodf.to_dict('records'))
+        if '.xml' in filename:
+            topology = {}
+            if filename == '__init__.py':
+                pass
+            elif 'NETWORK' in filename:
+                topology['filename'] = filename
+                topology['device'] = 'Instrument Topo File'
+                topodict.append(topology)
+            else:
+                with open(str(packagepath)+ topopath + filename, 'r') as f:
+                    content = f.readlines()
+                content = "".join(content)
+                soup = bs(content, 'lxml')
+                device = soup.find('de:device')
+                topology['filename'] = filename
+                topology['device'] = f'EDS for {device["instancename"]}'
+                topodict.append(topology)
+        topodf = pd.DataFrame(topodict)
+        children = dash_table.DataTable(
+            id='topotable',
+            columns=[{"name": i, "id": i} for i in topodf.columns],
+            data=topodf.to_dict('records'))
     return children
 
 
