@@ -8,6 +8,8 @@ import rats.apps.interscanapp as interscanapp
 import rats.callbackfunctions.corecallbacks as corecallbacks
 import dash_uploader as du
 
+topodatatable = corecallbacks.populatetoporeport()
+
 app.layout = html.Div([
                             dcc.Location(id='url', refresh=False),
 
@@ -96,9 +98,40 @@ app.layout = html.Div([
                             html.Button(['Clear Program Data'], id='cleardata', n_clicks=None,
                                         className='btn btn-danger', type='button'),
                             html.Div(id='clearstatus', className='text-center text-danger'),
-                            html.P(['Waters Corp.']),
 
-                             ],className='jumbotron text-center mx-auto')
+                            dcc.Upload(
+                                id='upload-topo',
+                                children=html.Div([
+                                    'Drag and Drop or ',
+                                    html.A('Select Relevant Topo Files')
+                                ]),
+                                style={
+                                    'width': '100%',
+                                    'height': '60px',
+                                    'lineHeight': '60px',
+                                    'borderWidth': '1px',
+                                    'borderStyle': 'dashed',
+                                    'borderRadius': '5px',
+                                    'textAlign': 'center',
+                                    'margin': '10px'
+                                },
+                                # Allow multiple files to be uploaded
+                                multiple=True
+                            ),
+
+                            html.P('Topo files and EDS files loaded:'),
+                            html.Div([
+                                html.Div([topodatatable],id='toporeport',className='col')
+                            ],id='topodatacontainer',className='col'),
+
+                            html.Br(),
+                            html.Button(['Clear Topo Data'], id='cleartopo', n_clicks=None,
+                                        className='btn btn-danger', type='button'),
+
+                            html.Div([],id='clearedtopo',className='col')
+
+                             ],className='jumbotron text-center mx-auto'),
+
 ])
 
 

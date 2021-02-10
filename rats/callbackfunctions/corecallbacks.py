@@ -15,10 +15,11 @@ if platform.system() == 'Windows':
     cachepath = '\\cache\\'
     dfpath = '\\feathereddataframes\\'
     figurepath = '\\pickledfigures\\'
+    topopath = '\\topo\\'
 else:
     cachepath = '/cache/'
     dfpath = '/feathereddataframes/'
-    figurepath = '/pickledfigures/'
+    topopath = '/topo/'
 
 
 packagepath = pathlib.Path(__file__).parent.parent.resolve()
@@ -70,7 +71,6 @@ for i in range(12):
 #============================================================
 #           /DROPDOWN POPULATION
 #============================================================
-
 
 # ============================================================
 #           FILE UPLOAD
@@ -343,7 +343,107 @@ def shutdown(n_clicks):
 #============================================================
 
 
+#============================================================
+#           TOPO MANAGEMENT
+#============================================================
+
+def populatetoporeport():
+    '''
+    Finds loaded topo files and constructs a DF for display with dash_table of the files and the device to which they
+    map.
+    :return: dash_table
+    '''
+    from bs4 import BeautifulSoup as bs
+    topodict=[]
+    import os
+    for filename in os.listdir(str(packagepath)+topopath):
+        print(filename)
+        topology = {}
+        if filename == '__init__.py':
+            pass
+        elif 'NETWORK' in filename:
+            topology['filename'] = filename
+            topology['device'] = 'Instrument Topo File'
+            topodict.append(topology)
+        else:
+            with open(str(packagepath)+ topopath + filename, 'r') as f:
+                content = f.readlines()
+            content = "".join(content)
+            soup = bs(content, 'lxml')
+            device = soup.find('de:device')
+            topology['filename'] = filename
+            topology['device'] = f'EDS for {device["instancename"]}'
+            topodict.append(topology)
+    topodf = pd.DataFrame(topodict)
+    children = dash_table.DataTable(
+        id='topotable',
+        columns=[{"name": i, "id": i} for i in topodf.columns],
+        data=topodf.to_dict('records'))
+    return children
 
 
+import base64
+def parse_topo(contents, filename):
+    '''
+    Handle uploads from dcc.upload component - topo files are small enough for this to be effective.
+    '''
+    content_type, content_string = contents.split(',')
 
+    decoded = base64.b64decode(content_string)
+    print(content_type)
+    try:
+       if '.xml' in filename:
+           print(filename)
+           print('xml found')
+           print(str(decoded[2:]))
+           with open(str(packagepath) + topopath + filename, 'w') as f:
+               f.write(str(decoded))
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
 
+@app.callback(Output('toporeport', 'children'),
+              Input('upload-topo', 'contents'),
+              State('upload-topo', 'filename'))
+def update_toporeport(list_of_contents, list_of_names):
+    '''
+    Upload topography files and update the displayed output
+    '''
+    if list_of_contents is None:
+        raise PreventUpdate
+    elif list_of_contents is not None:
+        [parse_topo(c, n) for c, n in zip(list_of_contents, list_of_names)]
+        children = populatetoporeport()
+        return children
+
+## function to delete what's in the topo folder required
+
+@app.callback([Output('clearedtopo','children'),
+               Output('topodatacontainer','children')],
+              [Input('cleartopo','n_clicks')])
+def cleartopodata(n_clicks):
+    '''
+    clear all topo data
+    '''
+    if n_clicks == None:
+        pass
+    else:
+        #clear session data before shutdown
+        import os, shutil
+        for filename in os.listdir(str(packagepath) + topopath):
+            if filename != '__init__.py':
+                file_path = os.path.join(str(packagepath) + topopath + filename)
+            else:
+                file_path = False
+            if file_path:
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                    print('topo data deleted')
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+        return 'All topo data has been cleared',html.Div([],id='toporeport',className='col')
