@@ -34,7 +34,6 @@ def test_case(absolutepath,file):
     fig = interscanplot(df)
     fig.show()
 
-
 file = 'RATS simulation 1587681937.txt'
 # test_case(f'/users/steve/documents/workwaters/{file}',file)
 
