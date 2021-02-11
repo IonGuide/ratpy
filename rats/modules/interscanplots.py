@@ -9,6 +9,8 @@ def interscanplot(df,timescale=1000000):
     df = df.set_index(['function','llc']).diff()
     df = df.reset_index()
     df=df.iloc[1:] # the first value here will be 0 as this is a diff function which basically shifts them all in a particular direction
+    df.loc[:,'timescale'] = timescale
+    df.loc[:,'time'] = df['time']/df['timescale']
     df = df.sort_values('function',ascending=False)
 
 
