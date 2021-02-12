@@ -2,30 +2,29 @@ import rats.modules.ratparser as ratparser
 import pandas as pd
 import plotly_express as px
 
-def interscanplot(df,timescale=1000000):
 
+def interscanplot(df, timescale=1000000):
     title = df['board'].astype('str').unique()[0]
-    df = df[['function','time','llc']].drop_duplicates()
-    df = df.set_index(['function','llc']).diff()
+    df = df[['function', 'time', 'llc']].drop_duplicates()
+    df = df.set_index(['function', 'llc']).diff()
     df = df.reset_index()
-    df=df.iloc[1:] # the first value here will be 0 as this is a diff function which basically shifts them all in a particular direction
-    df.loc[:,'timescale'] = timescale
-    df.loc[:,'time'] = df['time']/df['timescale']
-    df = df.sort_values('function',ascending=False)
+    df = df.iloc[1:]
+    df.loc[:, 'timescale'] = timescale
+    df.loc[:, 'time'] = df['time']/df['timescale']
+    df = df.sort_values('function', ascending=False)
 
-
-    fig = px.violin(df,x='time',y='function',color='function',orientation='h',title=title).update_traces(side='positive',width=2.5)
+    fig = px.violin(df, x='time', y='function', color='function', orientation='h',
+                    title=title).update_traces(side='positive', width=2.5)
     fig.update_yaxes(type='category')
     fig.update_layout(plot_bgcolor='#fff')
 
     return fig
 
 
-
-def test_case(absolutepath,file):
+def test_case(absolutepath, f):
     try:
-        df = pd.read_feather(f'../feathereddataframes/{file}.feather')
-    except:
+        df = pd.read_feather(f'../feathereddataframes/{f}.feather')
+    except Exception:
         print('df not found')
         filename = absolutepath
         testclass = ratparser.RatParse(filename)
@@ -34,6 +33,6 @@ def test_case(absolutepath,file):
     fig = interscanplot(df)
     fig.show()
 
+
 file = 'RATS simulation 1587681937.txt'
 # test_case(f'/users/steve/documents/workwaters/{file}',file)
-

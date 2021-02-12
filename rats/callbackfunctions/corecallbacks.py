@@ -10,6 +10,10 @@ import pathlib
 import platform
 import dash_table
 import dash_uploader as du
+import os
+import shutil
+import base64
+from bs4 import BeautifulSoup as bs
 
 if platform.system() == 'Windows':
     cachepath = '\\cache\\'
@@ -21,9 +25,8 @@ else:
     dfpath = '/feathereddataframes/'
     topopath = '/topo/'
 
-
 packagepath = pathlib.Path(__file__).parent.parent.resolve()
-du.configure_upload(app,str(packagepath)+cachepath,use_upload_id=False,)
+du.configure_upload(app, str(packagepath) + cachepath, use_upload_id=False, )
 
 '''
 Contents: 
@@ -43,10 +46,9 @@ Contents:
 
 '''
 
-#============================================================
+# ============================================================
 #           DROPDOWN POPULATION
-#============================================================
-## have to create some placeholders for the callbacks to get their teeth into something - this is a plaster over a Dash issue
+# ============================================================
 filenames = []
 dataframes = []
 bigpictureplotdata = []
@@ -68,84 +70,83 @@ for i in range(12):
     item = {'label': f'Data Slot {i + 1}', 'value': i}
     dropdownoptions.append(item)
 
-#============================================================
+
+# ============================================================
 #           /DROPDOWN POPULATION
-#============================================================
+# ============================================================
 
 # ============================================================
 #           FILE UPLOAD
 # ============================================================
-#### DATAFRAME PRODUCTION
+# DATAFRAME PRODUCTION
 @app.callback(Output('errorlog', 'children'),
               Input('dash-uploader', 'isCompleted'),
-              State('errorlog','children'))
-def upload(complete,error):
-    # format the relevant information into a dataframe, to append later to the session dataframe or to store as the first instance
+              State('errorlog', 'children'))
+def upload(complete, error):
+    # format the relevant information into a dataframe, append later to the session dataframe
     # this returns after pre-processing and it's not clear why, so it preserves the sate of the error log
     if not complete:
         return
     return error
 
+
 # ============================================================
 #           /FILE UPLOAD
 # ============================================================
 
-#============================================================
+# ============================================================
 #           DATA PRE-PROCESSING
-#============================================================
+# ============================================================
 
-@app.callback([Output('datalist','children'),
-               Output('errorlogcontainer','children'),
-               Output('ratdashpullcontainer','children'),
-               Output('scopepullcontainer','children'),
-               Output('interscanpullcontainer','children')],
-              [Input('processdata','n_clicks')])
+@app.callback([Output('datalist', 'children'),
+               Output('errorlogcontainer', 'children'),
+               Output('ratdashpullcontainer', 'children'),
+               Output('scopepullcontainer', 'children'),
+               Output('interscanpullcontainer', 'children')],
+              [Input('processdata', 'n_clicks')])
 def preprocessdata(click):
     errormessage = ''
-    #function to add to the session file dataframe the status of each file and yield the gui output
+    # function to add to the session file dataframe the status of each file and yield the gui output
     if click is None:
         raise PreventUpdate
 
     list_of_names = []
-    import os
     for filename in os.listdir(str(packagepath / 'cache')):
         if '.txt' in filename:
             list_of_names.append(filename)
 
-    filenamedf = pd.DataFrame(
-        dict(file=list_of_names, processed=['no' for i in list_of_names]))
+    filenamedf = pd.DataFrame(dict(file=list_of_names, processed=['no'] * len(list_of_names)))
 
     for i in list_of_names:
         try:
             # try to load an existing sessionfilenames
             sessionfilenames = pd.read_feather(str(packagepath) + cachepath + 'sessionfilenames')
             if i not in sessionfilenames['file'].unique():
-                ## add this new file to the sessionfilenames dataframe if it's not already there
+                # add this new file to the sessionfilenames dataframe if it's not already there
                 sessionfilenames = sessionfilenames.append(filenamedf, ignore_index=True)
                 sessionfilenames.to_feather(str(packagepath) + cachepath + 'sessionfilenames')
-        except:
-            ## if there was no cache of session filenames, then use this filename to create the dataframe in the cache
+        except Exception:
+            # if there was no cache of session filenames, then use this filename to create the dataframe in the cache
             sessionfilenames = filenamedf
             sessionfilenames.to_feather(str(packagepath) + cachepath + 'sessionfilenames')
 
         try:
-            ## see if there's a valid dataframe stored for this file
+            # see if there's a valid dataframe stored for this file
             pd.read_feather(str(packagepath) + dfpath + f'{i}.feather')
             print('found df')
-        except:
-            ## should be a case of now reading this file in from cache instead of from some absolute path...
+        except Exception:
+            # should be a case of now reading this file in from cache instead of from some absolute path...
             parser = ratparser.RatParse(str(packagepath) + cachepath + f'{i}')
-            #soomething's going wrong here when reading file back in from cache
+            # soomething's going wrong here when reading file back in from cache
             if parser.verifyfile():
                 df = parser.dataframeoutput()
                 df.to_feather(str(packagepath) + dfpath + f'{i}.feather')
             else:
-                #remove the filename from the session and the file from the cache
+                # remove the filename from the session and the file from the cache
                 sessionfilenames = pd.read_feather(str(packagepath) + cachepath + 'sessionfilenames')
                 sessionfilenames = sessionfilenames[sessionfilenames['file'] != i]
-                sessionfilenames.reset_index(drop=True,inplace=True)
+                sessionfilenames.reset_index(drop=True, inplace=True)
                 sessionfilenames.to_feather(str(packagepath) + cachepath + 'sessionfilenames')
-                import os, shutil
                 file_path = os.path.join(str(packagepath / 'cache'), i)
                 try:
                     if os.path.isfile(file_path) or os.path.islink(file_path):
@@ -158,7 +159,7 @@ def preprocessdata(click):
 
     try:
         sessionfilenames = sessionfilenames.drop_duplicates(subset='file')
-        sessionfilenames.reset_index(drop=True,inplace=True)
+        sessionfilenames.reset_index(drop=True, inplace=True)
         filenames = sessionfilenames['file'].tolist()
         log = []
         for i in filenames:
@@ -186,93 +187,99 @@ def preprocessdata(click):
         sessionfilenames.to_feather(str(packagepath) + cachepath + 'sessionfilenames')
         print('stored sessionfilenemes df')
 
-        tabledata = sessionfilenames[['file','log']]
+        tabledata = sessionfilenames[['file', 'log']]
         children = dash_table.DataTable(
-                    id='table',
-                    columns=[{"name": i, "id": i} for i in tabledata.columns],
-                    data=tabledata.to_dict('records'),
-                    style_data_conditional=[{
-                        'if': {
-                            'filter_query': "{log} contains 'There may be an error in this file'",
-                            'column_id': 'log'
+            id='table',
+            columns=[{"name": i, "id": i} for i in tabledata.columns],
+            data=tabledata.to_dict('records'),
+            style_data_conditional=[{
+                'if': {
+                    'filter_query': "{log} contains 'There may be an error in this file'",
+                    'column_id': 'log'
 
-                        },
-                        'border-top-color': 'Tomato',
-                        'border-bottom-color': 'Tomato',
-                        'border-top-style': 'solid',
-                        'border-bottom-style': 'solid',
-                        'border-top-width': '1px',
-                        'border-bottom-width': '1px',
-                        'background-color':'rgba(255,65,54,0.2)'
+                },
+                'border-top-color': 'Tomato',
+                'border-bottom-color': 'Tomato',
+                'border-top-style': 'solid',
+                'border-bottom-style': 'solid',
+                'border-top-width': '1px',
+                'border-bottom-width': '1px',
+                'background-color': 'rgba(255,65,54,0.2)'
+
+            },
+                {
+                    'if': {
+                        'filter_query': "{log} contains 'This file does not complement file'",
+                        'column_id': 'log'
 
                     },
-                    {
-                        'if': {
-                            'filter_query': "{log} contains 'This file does not complement file'",
-                            'column_id': 'log'
+                    'border-top-color': 'Tomato',
+                    'border-bottom-color': 'Tomato',
+                    'border-top-style': 'solid',
+                    'border-bottom-style': 'solid',
+                    'border-top-width': '1px',
+                    'border-bottom-width': '1px',
+                    'background-color': 'rgba(252,186,3,0.2)'
+                },
+                {
+                    'if': {
+                        'filter_query': "{log} contains 'No issues'",
+                        'column_id': 'log'
 
-                        },
-                        'border-top-color': 'Tomato',
-                        'border-bottom-color': 'Tomato',
-                        'border-top-style' : 'solid',
-                        'border-bottom-style' : 'solid',
-                        'border-top-width' : '1px',
-                        'border-bottom-width' : '1px',
-                        'background-color':'rgba(252,186,3,0.2)'
                     },
-                    {
-                        'if': {
-                            'filter_query': "{log} contains 'No issues'",
-                            'column_id': 'log'
-
-                        },
-                        'border-top-color': 'Green',
-                        'border-bottom-color': 'Green',
-                        'border-top-style': 'solid',
-                        'border-bottom-style': 'solid',
-                        'border-top-width': '1px',
-                        'border-bottom-width': '1px',
-                        'background-color': 'rgba(60,201,72,0.2)'
-                    },
-                    ],
-                    style_cell = {'whiteSpace':'pre-line',
-                                  'textAlign':'center',
-                                  'font-family': 'sans-serif'},
-                    style_as_list_view=True)
-        ## all manipulation of sessionfilenames dataframe is now complete...
+                    'border-top-color': 'Green',
+                    'border-bottom-color': 'Green',
+                    'border-top-style': 'solid',
+                    'border-bottom-style': 'solid',
+                    'border-top-width': '1px',
+                    'border-bottom-width': '1px',
+                    'background-color': 'rgba(60,201,72,0.2)'
+                },
+            ],
+            style_cell={'whiteSpace': 'pre-line',
+                        'textAlign': 'center',
+                        'font-family': 'sans-serif'},
+            style_as_list_view=True)
+        # all manipulation of sessionfilenames dataframe is now complete...
         print(errormessage)
 
-        rdbutton = html.Button(id='pulldataratdash',children='Pull the data into ratdash',className='btn btn-secondary', type='button')
-        sbutton = html.Button(id='pulldatascope',children='Pull the data into scope app',className='btn btn-secondary', type='button')
-        ibutton = html.Button(id='pulldatainterscan',children='Pull the data into interscan app',className='btn btn-secondary', type='button')
+        rdbutton = html.Button(id='pulldataratdash', children='Pull the data into ratdash',
+                               className='btn btn-secondary', type='button')
+        sbutton = html.Button(id='pulldatascope', children='Pull the data into scope app',
+                              className='btn btn-secondary', type='button')
+        ibutton = html.Button(id='pulldatainterscan', children='Pull the data into interscan app',
+                              className='btn btn-secondary', type='button')
 
-        return children, html.Div([errormessage],id='errorlog', className='col'), rdbutton, sbutton, ibutton
-    except:
+        return children, html.Div([errormessage], id='errorlog', className='col'), rdbutton, sbutton, ibutton
+    except Exception:
         print('epic fail')
-        rdbutton = html.Button(id='pulldataratdash',children='Pull the data into ratdash',className='btn btn-secondary', type='button')
-        sbutton = html.Button(id='pulldatascope',children='Pull the data into scope app',className='btn btn-secondary', type='button')
-        ibutton = html.Button(id='pulldatainterscan',children='Pull the data into interscan app',className='btn btn-secondary', type='button')
-        return [], 'failed to preprocess data',rdbutton, sbutton, ibutton
+        rdbutton = html.Button(id='pulldataratdash', children='Pull the data into ratdash',
+                               className='btn btn-secondary', type='button')
+        sbutton = html.Button(id='pulldatascope', children='Pull the data into scope app',
+                              className='btn btn-secondary', type='button')
+        ibutton = html.Button(id='pulldatainterscan', children='Pull the data into interscan app',
+                              className='btn btn-secondary', type='button')
+        return [], 'failed to preprocess data', rdbutton, sbutton, ibutton
         pass
 
-#============================================================
+
+# ============================================================
 #           /DATA PRE-PROCESSING
-#============================================================
+# ============================================================
 
 
-#============================================================
+# ============================================================
 #           CLEAR PROGRAM DATA
-#============================================================
-@app.callback(Output('clearstatus','children'),
-              [Input('cleardata','n_clicks')])
+# ============================================================
+@app.callback(Output('clearstatus', 'children'),
+              [Input('cleardata', 'n_clicks')])
 def clearprogramdata(n_clicks):
-    if n_clicks == None:
+    if n_clicks is None:
         pass
     else:
         print('Ratdash has cleared all the program data!')
 
-        #clear session data before shutdown
-        import os, shutil
+        # clear session data before shutdown
         for filename in os.listdir(str(packagepath / 'feathereddataframes')):
             if filename != '__init__.py':
                 file_path = os.path.join(str(packagepath / 'feathereddataframes'), filename)
@@ -303,23 +310,22 @@ def clearprogramdata(n_clicks):
 
         return 'All previously processed data has been cleared'
 
-#============================================================
-#           /CLEAR PROOGRAM DATA
-#============================================================
 
-#============================================================
+# ============================================================
+#           /CLEAR PROOGRAM DATA
+# ============================================================
+
+# ============================================================
 #           PROGRAM SHUTDOWN
-#============================================================
-@app.callback(Output('runstatus','children'),
-              [Input('shutdown','n_clicks')])
+# ============================================================
+@app.callback(Output('runstatus', 'children'),
+              [Input('shutdown', 'n_clicks')])
 def shutdown(n_clicks):
-    if n_clicks == None:
+    if n_clicks is None:
         pass
     else:
         print('Ratdash says goodbye!')
 
-        #clear session data before shutdown
-        import os, shutil
         for filename in os.listdir(str(packagepath / 'cache')):
             if filename != '__init__.py':
                 file_path = os.path.join(str(packagepath / 'cache'), filename)
@@ -338,25 +344,24 @@ def shutdown(n_clicks):
         func()
         return 'Server has been shut down, please close the browser window'
 
-#============================================================
+
+# ============================================================
 #           /PROGRAM SHUTDOWN
-#============================================================
+# ============================================================
 
 
-#============================================================
+# ============================================================
 #           TOPO MANAGEMENT
-#============================================================
+# ============================================================
 
 def populatetoporeport():
-    '''
+    """
     Finds loaded topo files and constructs a DF for display with dash_table of the files and the device to which they
     map.
     :return: dash_table
-    '''
-    from bs4 import BeautifulSoup as bs
-    topodict=[]
-    import os
-    for filename in os.listdir(str(packagepath)+topopath):
+    """
+    topodict = []
+    for filename in os.listdir(str(packagepath) + topopath):
         print(filename)
         if '.xml' in filename:
             topology = {}
@@ -367,7 +372,7 @@ def populatetoporeport():
                 topology['device'] = 'Instrument Topo File'
                 topodict.append(topology)
             else:
-                with open(str(packagepath)+ topopath + filename, 'r') as f:
+                with open(str(packagepath) + topopath + filename, 'r') as f:
                     content = f.readlines()
                 content = "".join(content)
                 soup = bs(content, 'lxml')
@@ -383,35 +388,35 @@ def populatetoporeport():
     return children
 
 
-import base64
 def parse_topo(contents, filename):
-    '''
+    """
     Handle uploads from dcc.upload component - topo files are small enough for this to be effective.
-    '''
+    """
     content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
     print(content_type)
     try:
-       if '.xml' in filename:
-           print(filename)
-           print('xml found')
-           print(str(decoded[2:]))
-           with open(str(packagepath) + topopath + filename, 'w') as f:
-               f.write(str(decoded))
+        if '.xml' in filename:
+            print(filename)
+            print('xml found')
+            print(str(decoded[2:]))
+            with open(str(packagepath) + topopath + filename, 'w') as f:
+                f.write(str(decoded))
     except Exception as e:
         print(e)
         return html.Div([
             'There was an error processing this file.'
         ])
 
+
 @app.callback(Output('toporeport', 'children'),
               Input('upload-topo', 'contents'),
               State('upload-topo', 'filename'))
 def update_toporeport(list_of_contents, list_of_names):
-    '''
+    """
     Upload topography files and update the displayed output
-    '''
+    """
     if list_of_contents is None:
         raise PreventUpdate
     elif list_of_contents is not None:
@@ -419,20 +424,20 @@ def update_toporeport(list_of_contents, list_of_names):
         children = populatetoporeport()
         return children
 
-## function to delete what's in the topo folder required
 
-@app.callback([Output('clearedtopo','children'),
-               Output('topodatacontainer','children')],
-              [Input('cleartopo','n_clicks')])
+# function to delete what's in the topo folder required
+
+@app.callback([Output('clearedtopo', 'children'),
+               Output('topodatacontainer', 'children')],
+              [Input('cleartopo', 'n_clicks')])
 def cleartopodata(n_clicks):
-    '''
+    """
     clear all topo data
-    '''
-    if n_clicks == None:
+    """
+    if n_clicks is None:
         pass
     else:
-        #clear session data before shutdown
-        import os, shutil
+        # clear session data before shutdown
         for filename in os.listdir(str(packagepath) + topopath):
             if filename != '__init__.py':
                 file_path = os.path.join(str(packagepath) + topopath + filename)
@@ -447,4 +452,4 @@ def cleartopodata(n_clicks):
                     print('topo data deleted')
                 except Exception as e:
                     print('Failed to delete %s. Reason: %s' % (file_path, e))
-        return 'All topo data has been cleared',html.Div([],id='toporeport',className='col')
+        return 'All topo data has been cleared', html.Div([], id='toporeport', className='col')

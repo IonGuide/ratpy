@@ -1,5 +1,5 @@
 class RATSError(Exception):
-    def __init__(self,*args):
+    def __init__(self, *args):
         if args:
             self.message = args[0]
         else:
@@ -10,4 +10,3 @@ class RATSError(Exception):
             return f'RATSError: {self.message}'
         else:
             return 'RATSError: Something went wrong, sorry about the lack of info...'
-

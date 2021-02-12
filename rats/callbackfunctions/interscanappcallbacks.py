@@ -1,7 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
-from dash.dependencies import Input,Output,State
+from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly_express as px
 import pickle
@@ -21,22 +21,24 @@ else:
 
 packagepath = pathlib.Path(__file__).parent.parent.resolve()
 
-#================================================================================================================================================
+# ======================================================================================================================
 #       Creates placeholder content to feed into inital html in the application (required; a quirk of Dash)
-#================================================================================================================================================
+# ======================================================================================================================
 dropdownoptions = []
 for i in range(12):
-    item = {'label': f'Data Slot {i+1}', 'value': i}
+    item = {'label': f'Data Slot {i + 1}', 'value': i}
     dropdownoptions.append(item)
 
-placeholderfig = px.line(x=[1,2,3,4], y=[1,2,3,4], title='placeholder') #will be changed later, possibly to something representative
+placeholderfig = px.line(x=[1, 2, 3, 4], y=[1, 2, 3, 4],
+                         title='placeholder')  # will be changed later, possibly to something representative
 
 dropdownoptions = []
 for i in range(12):
     item = {'label': f'Data Slot {i + 1}', 'value': i}
     dropdownoptions.append(item)
 
-## this function could also be a callback now, which is fired on a button press...
+
+# this function could also be a callback now, which is fired on a button press...
 def optionscreator(filenames):
     options = []
     for i in range(len(filenames)):
@@ -46,40 +48,38 @@ def optionscreator(filenames):
     return options
 
 
-
-#================================================================================================================================================
+# ======================================================================================================================
 #       Creates placeholder html content to initialise the application (required; a quirk of Dash)
-#================================================================================================================================================
+# ======================================================================================================================
 def createcontent(numberofbanks):
-    children = []
     options = []
 
     cards = []
     for i in range(numberofbanks):
-
         card = html.Div([
-                    html.Div([
-                        html.P(['Select the file you want to interrogate in this bank of plots:']),
-                        dcc.Dropdown(id=f'interscanappfileselect{i}',
-                                     options=options, persistence=True),
+            html.Div([
+                html.P(['Select the file you want to interrogate in this bank of plots:']),
+                dcc.Dropdown(id=f'interscanappfileselect{i}',
+                             options=options, persistence=True),
 
-                        html.Br(),
+                html.Br(),
 
-                        html.P(['Figure Height']),
+                html.P(['Figure Height']),
 
-                        dcc.Slider(id=f'interscanappheight{i}', min=500, max=2000, step=100, value=500,
-                                   marks={x: str(x) for x in range(5, 20, 10)}),
+                dcc.Slider(id=f'interscanappheight{i}', min=500, max=2000, step=100, value=500,
+                           marks={x: str(x) for x in range(5, 20, 10)}),
 
-                        html.Br(),
-                        html.Button(id=f'interscanappreplot{i}', n_clicks=0, children='Plot Data', className='btn btn-secondary',
-                                    type='button'),
-                    ], className='card-header'),
+                html.Br(),
+                html.Button(id=f'interscanappreplot{i}', n_clicks=0, children='Plot Data',
+                            className='btn btn-secondary',
+                            type='button'),
+            ], className='card-header'),
 
-                    html.Div([
-                        dcc.Graph(id=f'interscanappplot{i}', figure=placeholderfig)],
-                        className='card-body',id=f'interscanappplotcontainer{i}'),
+            html.Div([
+                dcc.Graph(id=f'interscanappplot{i}', figure=placeholderfig)],
+                className='card-body', id=f'interscanappplotcontainer{i}'),
 
-                ],className='card')
+        ], className='card')
 
         cards.append(card)
 
@@ -88,19 +88,18 @@ def createcontent(numberofbanks):
     return group
 
 
-@app.callback([Output('interscanappfileselect0','options'),
-               Output('interscanappfileselect1','options'),
-               Output('interscanappfileselect2','options'),
-               Output('pulldatainterscan','children')],
-              [Input('pulldatainterscan','n_clicks')])
+@app.callback([Output('interscanappfileselect0', 'options'),
+               Output('interscanappfileselect1', 'options'),
+               Output('interscanappfileselect2', 'options'),
+               Output('pulldatainterscan', 'children')],
+              [Input('pulldatainterscan', 'n_clicks')])
 def pulldata(click):
-
     if click is None:
         raise PreventUpdate
 
     options = []
     try:
-        sessionfilenames  =pd.read_feather(str(packagepath) + cachepath + 'sessionfilenames')
+        sessionfilenames = pd.read_feather(str(packagepath) + cachepath + 'sessionfilenames')
 
         filenames = sessionfilenames['file'].tolist()
         for i in range(len(filenames)):
@@ -108,26 +107,26 @@ def pulldata(click):
                 item = {'label': f'filename: {filenames[i]}', 'value': f'{filenames[i]}'}
                 options.append(item)
 
-        return options,options,options,'Data has been pulled into app'
-    except:
-        return 'no file to display','no file to display'
+        return options, options, options, 'Data has been pulled into app'
+    except Exception:
+        return 'no file to display', 'no file to display'
 
 
-#==============================================================================================================================
+# ======================================================================================================================
 #       CORE CODE TO DEAL WITH FIGURE UPDATES AND SAVING
-#==============================================================================================================================
-def plotbank(replot,file,height=500):
+# ======================================================================================================================
+def plotbank(replot, file, height=500):
     if replot == 0:
         raise PreventUpdate
 
     try:
-        #Try to load figure from file...
-        with open(str(packagepath) + figurepath + +f'{file}_interscanappfigures.pickle', 'rb') as f:
+        # Try to load figure from file...
+        with open(str(packagepath) + figurepath + f'{file}_interscanappfigures.pickle', 'rb') as f:
             figs = pickle.load(f)
         plot = figs['interscanplot']
         print(f'Interscan plot for file {file}, was loaded from cache')
 
-    except:
+    except Exception:
         # if there are no figures in storage, make them and save them
         df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
         plot = interscanplots.interscanplot(df)
@@ -145,30 +144,28 @@ def plotbank(replot,file,height=500):
     return plot
 
 
-
-#==============================================================================================================================
+# ======================================================================================================================
 #               CALLBACKS
-#==============================================================================================================================
-@app.callback(Output('interscanappplot0','figure'),
-              [Input('interscanappreplot0','n_clicks'),
-               Input('interscanappfileselect0','value')],
-              [State('interscanappheight0','value')])
-def interscanappplotbank0(replot,file,height):
+# ======================================================================================================================
+@app.callback(Output('interscanappplot0', 'figure'),
+              [Input('interscanappreplot0', 'n_clicks'),
+               Input('interscanappfileselect0', 'value')],
+              [State('interscanappheight0', 'value')])
+def interscanappplotbank0(replot, file, height):
+    return plotbank(replot, file, height)
 
-    return plotbank(replot,file,height)
 
-@app.callback(Output('interscanappplot1','figure'),
-              [Input('interscanappreplot1','n_clicks'),
-               Input('interscanappfileselect1','value')],
-              [State('interscanappheight1','value')])
-def interscanappplotbank1(replot,file,height):
+@app.callback(Output('interscanappplot1', 'figure'),
+              [Input('interscanappreplot1', 'n_clicks'),
+               Input('interscanappfileselect1', 'value')],
+              [State('interscanappheight1', 'value')])
+def interscanappplotbank1(replot, file, height):
+    return plotbank(replot, file, height)
 
-    return plotbank(replot,file,height)
 
-@app.callback(Output('interscanappplot2','figure'),
-              [Input('interscanappreplot2','n_clicks'),
-               Input('interscanappfileselect2','value')],
-              [State('interscanappheight2','value')])
-def interscanappplotbank2(replot,file,height):
-
-    return plotbank(replot,file,height)
+@app.callback(Output('interscanappplot2', 'figure'),
+              [Input('interscanappreplot2', 'n_clicks'),
+               Input('interscanappfileselect2', 'value')],
+              [State('interscanappheight2', 'value')])
+def interscanappplotbank2(replot, file, height):
+    return plotbank(replot, file, height)

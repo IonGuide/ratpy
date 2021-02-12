@@ -9,13 +9,15 @@ else:
 packagepath = pathlib.Path(__file__).parent.parent.resolve()
 
 
-def extractscale(netid, edblist):
-    edblist.remove(31)
-    ## need to organically identify the topo file
+def extractscale(netid, edbs):
+    edbs.remove(31)
+    # need to organically identify the topo file
     import os
     for filename in os.listdir(str(packagepath) + topopath):
         if 'NETWORK' in filename and 'xml' in filename:
             topofile = filename
+        else:
+            return 'There was no topofile in the expected place with the expected name'
 
     with open(str(packagepath) + topopath + topofile, 'r') as f:
         content = f.readlines()
@@ -27,19 +29,19 @@ def extractscale(netid, edblist):
     description = {}
     units = {}
     scalingfactor = {}
-    min = {}
+    minimum = {}
 
     with open(str(packagepath) + topopath + f'DEVICE_{device["type"]}_{device["variant"]}.xml', 'r') as f:
         content = f.readlines()
         content = "".join(content)
         soup = bs(content, 'lxml')
 
-    for edb in edblist:
+    for edb in edbs:
         addr42 = soup.find('ep:interfaceaddress', {'addr': '42'})
         data = addr42.find('is:setting', {'id': edb})
         description[edb] = data['description']
         units[edb] = data['unit']
-        min[edb] = int(data['minvalue'])
+        minimum[edb] = int(data['minvalue'])
         bits = int(data['dataformat'].split('Q')[1]) + 1
         res = 2 ** bits
         '''
@@ -60,16 +62,16 @@ def extractscale(netid, edblist):
         description[31] = 'LLC'
         units[31] = 'SIP'
         scalingfactor[31] = 0
-        min[31] = 0
+        minimum[31] = 0
 
-    scalingfactors = dict(descriptions=description, units=units, min=min, scalingfactor=scalingfactor)
+    scalingfactors = dict(descriptions=description, units=units, minimum=minimum, scalingfactor=scalingfactor)
 
     return scalingfactors, board
 
 
-def testcase(netid, edblist):
-    output = extractscale(netid, edblist)
-    print(output['scalingfactor'])
+def testcase(netid, e):
+    output = extractscale(netid, e)
+    return output
 
 
 edblist = ['2', '10', '15', '20', '31']
