@@ -10,6 +10,7 @@ packagepath = pathlib.Path(__file__).parent.parent.resolve()
 
 
 def extractscale(netid, edbs):
+
     edbs.remove(31)
     # need to organically identify the topo file
     import os
@@ -17,7 +18,7 @@ def extractscale(netid, edbs):
         if 'NETWORK' in filename and 'xml' in filename:
             topofile = filename
         else:
-            return 'There was no topofile in the expected place with the expected name'
+            f'{filename} checked'
 
     with open(str(packagepath) + topopath + topofile, 'r') as f:
         content = f.readlines()
@@ -74,5 +75,5 @@ def testcase(netid, e):
     return output
 
 
-edblist = ['2', '10', '15', '20', '31']
-# testcase('5',edblist)
+# edblist = [2, 10, 15, 20, 31]
+# print(testcase('5',edblist))
