@@ -192,7 +192,6 @@ class RatParse:
         tblnum = [tblnum]*len(datalist)
         tblid = [tblid]*len(datalist)
         bcodehsh = [bcodehsh]*len(datalist)
-
         packetdict = dict(packet=packnum, llc=llctrigcount, function=function, sample=samplenum,
                           tablenumber=tblnum, tableid=tblid, barcodehash=bcodehsh, cycle=packetcycle,
                           scanflag=scanflag, edb=edblist, data=datalist, time=timestamps)
@@ -282,25 +281,24 @@ class RatParse:
         print('ratparser is done concatenating the dataframes')
 
         # do conversions to readable ints here
-        df['llc'] = df['llc'].apply(lambda x: int(x, 16))
-        df['function'] = df['function'].apply(lambda x: int(x, 16))
-        df['tablenumber'] = df['tablenumber'].apply(lambda x: int(x, 16))
-        df['tableid'] = df['tableid'].apply(lambda x: int(x, 16))
+        df['llc'] = df['llc'].apply(int,base=16)
+        df['function'] = df['function'].apply(int, base=16)
+        df['tablenumber'] = df['tablenumber'].apply(int,base=16)
+        df['tableid'] = df['tableid'].apply(int,base=16)
 
         # =============================================================================================================
         #   Find outliers
         # =============================================================================================================
         print('ratparser is finding outliers')
-        df = df.set_index(['llc', 'packet', 'function', 'cycle', 'time', 'edb', 'scanflag']).sort_index()
+        anomaly_detection_df = df.set_index(['llc', 'packet', 'function', 'cycle', 'time', 'edb', 'scanflag']).sort_index()
         try:
-            df = df.drop(1,
-                         level='scanflag')  # here, we drop data for all cycles which are interscan packet cycles
+            anomaly_detection_df = anomaly_detection_df.drop(1,level='scanflag')  # here, we drop data for all cycles which are interscan packet cycles
         except Exception:  # this was probably MRM data, one sample per packet - no interscan data
             pass
 
-        df.index.get_level_values('function').unique()  # grab all the function numbers
-        df = df.reset_index()  # flatten the dataframe ready for pivot
-        pivot = pd.pivot_table(df, values='data', index=['function', 'llc'])  # pivot table for relevant info
+        anomaly_detection_df.index.get_level_values('function').unique()  # grab all the function numbers
+        anomaly_detection_df = anomaly_detection_df.reset_index()  # flatten the dataframe ready for pivot
+        pivot = pd.pivot_table(anomaly_detection_df, values='data', index=['function', 'llc'])  # pivot table for relevant info
         markers = []  # initialise markers variable
         for i in pivot.index.get_level_values(
                 'function').unique().to_list():  # creates a list of all function numbers and loops over them
@@ -315,13 +313,13 @@ class RatParse:
 
         # convert columns to categories for big memory savings (storage and speed)
         cols = ['packet', 'llc', 'function', 'sample', 'tablenumber', 'tableid', 'scanflag', 'anomalous', 'barcodehash']
-
+        print(df.scanflag.unique().tolist())
         def catcols(dframe, columns):
             for i in columns:
                 dframe[i] = dframe[i].astype('category')
 
             return df
-
+        # I've dropped all the interscan from this dataframe at this point...
         df = catcols(df, cols)
 
         # =============================================================================================================
@@ -418,14 +416,19 @@ def test_case(absolutepath, file, scopestart=0, scopeend=100, show=False):
     fig3 = scopeplot(df, scopestart, scopeend)
 
     if show:
-        fig1.show()
-        fig2.show()
+        # fig1.show()
+        # fig2.show()
         fig3.show()
 
 
 # UNCOMMENT BELOW, MODIFY PATHS AS APPROPRIATE AND RUN THIS FILE TO TEST
 # ================================================
+import plotly.io as pio
+pio.renderers.default = "firefox"
+
+
 start = 10
 end = 100
-file = '5.txt'
+file = 'RATS simulation 1586964750.txt'
+# file = 'RATS simulation 1595852200.txt'
 # test_case(f'/users/steve/documents/workwaters/{file}',file,start,end,show=True)
