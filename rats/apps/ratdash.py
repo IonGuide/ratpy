@@ -11,7 +11,8 @@ layout = html.Div([
                     html.Div(
                         [html.Div(
                             [html.Div(
-                                [html.Button(id='pulldataratdash',children='Pull the data into ratdash',className='btn btn-secondary', type='button')
+                                [html.Button(id='pulldataratdash',children='Pull the data into Big Picture App',
+                                             className='btn btn-secondary', type='button')
                                 ],id='ratdashpullcontainer',className='col-12 text-center')
                             ], className='row')
                         ],className='container text-center'),

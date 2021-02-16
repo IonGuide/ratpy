@@ -29,9 +29,6 @@ for i in range(12):
     item = {'label': f'Data Slot {i + 1}', 'value': i}
     dropdownoptions.append(item)
 
-placeholderfig = px.line(x=[1, 2, 3, 4], y=[1, 2, 3, 4],
-                         title='placeholder')  # will be changed later, possibly to something representative
-
 dropdownoptions = []
 for i in range(12):
     item = {'label': f'Data Slot {i + 1}', 'value': i}
@@ -76,7 +73,7 @@ def createcontent(numberofbanks):
             ], className='card-header'),
 
             html.Div([
-                dcc.Graph(id=f'interscanappplot{i}', figure=placeholderfig)],
+                dcc.Graph(id=f'interscanappplot{i}', figure=[])],
                 className='card-body', id=f'interscanappplotcontainer{i}'),
 
         ], className='card')
@@ -119,27 +116,10 @@ def plotbank(replot, file, height=500):
     if replot == 0:
         raise PreventUpdate
 
-    try:
-        # Try to load figure from file...
-        with open(str(packagepath) + figurepath + f'{file}_interscanappfigures.pickle', 'rb') as f:
-            figs = pickle.load(f)
-        plot = figs['interscanplot']
-        print(f'Interscan plot for file {file}, was loaded from cache')
-
-    except Exception:
-        # if there are no figures in storage, make them and save them
-        df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
-        plot = interscanplots.interscanplot(df)
-        figs = dict(interscanplot=plot)
-        # dump figures into pickle for later use if necessary
-
-        print(f'Interscan plot for file {file}, was created from the dataframe')
+    df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
+    plot = interscanplots.interscanplot(df)
 
     plot.update_layout(height=height)
-
-    with open(str(packagepath) + figurepath + f'{file}_interscanappfigures.pickle', 'wb') as f:
-        pickle.dump(figs, f)
-        print(f'interscan figure for file {file} was saved to cache')
 
     return plot
 

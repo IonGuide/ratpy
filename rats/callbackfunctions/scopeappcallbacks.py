@@ -29,9 +29,6 @@ for i in range(12):
     item = {'label': f'Data Slot {i + 1}', 'value': i}
     dropdownoptions.append(item)
 
-placeholderfig = px.line(x=[1, 2, 3, 4], y=[1, 2, 3, 4],
-                         title='placeholder')  # will be changed later, possibly to something representative
-
 dropdownoptions = []
 for i in range(12):
     item = {'label': f'Data Slot {i + 1}', 'value': i}
@@ -73,7 +70,7 @@ def createcontent(numberofbanks):
             ], className='card-header'),
 
             html.Div([
-                dcc.Graph(id=f'scopeappplot{i}', figure=placeholderfig)],
+                dcc.Graph(id=f'scopeappplot{i}', figure=[])],
                 className='card-body', id=f'scopeappplotcontainer{i}'),
 
         ], className='card')
@@ -115,18 +112,11 @@ def plotbank(replot, file, llc, buffer, height=500):
     if replot == 0:
         raise PreventUpdate
 
-    # if there are no figures in storage, make them and save them
     df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
     s = scopeplots.scopeplot(df, llc=llc, buffer=buffer, facet=True)
-
     s.update_layout(height=height)  # make this a variable on a slider??
 
-    figs = dict(scopeplot=s)
-    # dump figures into pickle for later use if necessary
-    with open(str(packagepath) + figurepath + f'{file}_scopeappfigures.pickle', 'wb') as f:
-        pickle.dump(figs, f)
-
-    return figs['scopeplot']
+    return s
 
 
 # ======================================================================================================================

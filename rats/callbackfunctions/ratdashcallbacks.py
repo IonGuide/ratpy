@@ -57,15 +57,13 @@ def createcontent(numberofbanks):
     options = []
 
     for i in range(numberofbanks):
-        card = dcc.Loading([
-
-            html.Div([
+        card = html.Div([
                 html.Div([
                     html.P(['Select the file you want to interrogate in this bank of plots:']),
                     dcc.Dropdown(id=f'fileselect{i}',
-                                 options=options, persistence=True, persistence_type='local'),
+                                 options=options, persistence=True, persistence_type='session'),
                     html.Br(),
-                    html.Button(id=f'replot{i}', n_clicks=0, children='Plot Data', className='btn btn-secondary',
+                    html.Button(id=f'replot{i}', n_clicks=None, children='Plot Data', className='btn btn-secondary',
                                 type='button'),
                     html.Br(),
                     html.P([], id=f'interscanprompt{i}', className='text-danger')
@@ -74,19 +72,20 @@ def createcontent(numberofbanks):
                 html.Div([
                     html.Div([
                         html.Div(id=f'bigpicture{i}', children=[
-                            dcc.Graph(id=f'bigpictureplot{i}', figure=placeholderfig)
+                            dcc.Graph(id=f'bigpictureplot{i}', figure = [])
                         ], className='col-6 text-center'),
 
                         html.Div(id=f'scope{i}', children=[
-                            dcc.Graph(id=f'scopeplot{i}', figure=placeholderfig),
-                            dbc.Input(id=f"numberofscans{i}", type="number", value=10, persistence=True),
+                            dcc.Graph(id=f'scopeplot{i}', figure = []),
+                            dbc.Input(id=f"numberofscans{i}", type="number", value=10, persistence=True,
+                                      persistence_type='session'),
                             html.P('LLC buffer (data from +/- the number of LLC events here will be added to the plot)')
                         ], className='col-6 text-center'),
 
                     ], className='row')
                 ], className='card-body')
 
-            ], className='card', style={'height': 'auto'})])
+            ], className='card', style={'height': 'auto'})
 
         children.append(html.Br())
         children.append(card)
@@ -97,23 +96,16 @@ def createcontent(numberofbanks):
 # ======================================================================================================================
 #      Core functionality to handle plots in the ratdash app, called below by relevant callbacks
 # ======================================================================================================================
-def plotbank(replot, bigpictureclickdata, file, scans, bigpictureplot):
-    if replot == 0:
-        raise PreventUpdate
-
-    try:
-        # try to load figures from storage
-        with open(str(packagepath) + figurepath + f'{file}_ratdashfigures.pickle', 'rb') as f:
-            figs = pickle.load(f)
-        print('plotbank loaded figures')
-
-    except Exception:
-        # if there are no figures in storage, make them and save them
-        df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
+def plotbank(replot, bigpictureclickdata, file, scans, bigpicture):
+    print(replot)
+    df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
+    if replot is None:
+        bp = bigpicture
+    else:
         bp = bigpictureplots.bigpictureplot(df)
-        s = scopeplots.scopeplot(df, buffer=scans)
-        figs = dict(bigpictureplot=bp, scopeplot=s)
-        print('plotbank created figures from scratch')
+
+    s = scopeplots.scopeplot(df, buffer=scans)
+    print('plotbank created figures from scratch')
 
     # ========================================================
     # PLOT LINKAGES
@@ -125,19 +117,10 @@ def plotbank(replot, bigpictureclickdata, file, scans, bigpictureplot):
         # update scope plot here
         df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
         start = bigpictureclickdata['points'][0]['customdata'][0]
-        print(f'start: {start}')
-        scopeplot = scopeplots.scopeplot(df, llc=start, buffer=scans)
-        figs['scopeplot'] = scopeplot
-        # save out modifications
+        print(f'CENTRE LLC: {start}')
+        s = scopeplots.scopeplot(df, llc=start, buffer=scans)
 
-        with open(str(packagepath) + figurepath + f'{file}_ratdashfigures.pickle', 'wb') as f:
-            pickle.dump(figs, f)
-
-    else:
-        with open(str(packagepath) + figurepath + f'{file}_ratdashfigures.pickle', 'wb') as f:
-            pickle.dump(figs, f)
-
-    return figs['bigpictureplot'], figs['scopeplot']
+    return bp, s, None
 
 
 # ======================================================================================================================
@@ -161,33 +144,37 @@ def pulldata(click):
                 item = {'label': f'filename: {filenames[i]}', 'value': f'{filenames[i]}'}
                 options.append(item)
         return options, options, 'Data has been pulled into app'
-    except Exception:
-        return 'no file to display', 'no file to display'
+    except Exception as e:
+        print("EXCEPTION FROM PULLDATA() IN RATDASHCALLBACKS.PY:")
+        print(e)
+        return 'no file to display', 'no file to display', 'No data to pull into app'
 
 
 # ======================================================================================================================
 #       Handle layout and plotting in the first bank of plots
 # ======================================================================================================================
 @app.callback([Output('bigpictureplot0', 'figure'),
-               Output('scopeplot0', 'figure')],
+               Output('scopeplot0', 'figure'),
+               Output('replot0','n_clicks')],
               [Input('replot0', 'n_clicks'),
-               Input('bigpictureplot0', 'clickData')],
+               Input('bigpictureplot0', 'clickData'),
+               Input('numberofscans0', 'value')],
               [State('fileselect0', 'value'),
-               State('numberofscans0', 'value'),
-               State('bigpictureplot0', 'figure')])
-def plotbank0(replot0, bigpictureclickdata0, file0, llcbuffer, bigpictureplot):
-    return plotbank(replot0, bigpictureclickdata0, file0, llcbuffer, bigpictureplot)
+               State('bigpictureplot0','figure')])
+def plotbank0(replot0, bigpictureclickdata0, llcbuffer0, file0,bigpicture0):
+    return plotbank(replot0, bigpictureclickdata0, file0, llcbuffer0,bigpicture0)
 
 
 # ======================================================================================================================
 #       Handle layout and plotting in the second bank of plots
 # ======================================================================================================================
 @app.callback([Output('bigpictureplot1', 'figure'),
-               Output('scopeplot1', 'figure')],
+               Output('scopeplot1', 'figure'),
+               Output('replot1','n_clicks')],
               [Input('replot1', 'n_clicks'),
-               Input('bigpictureplot1', 'clickData')],
+               Input('bigpictureplot1', 'clickData'),
+               Input('numberofscans1', 'value')],
               [State('fileselect1', 'value'),
-               State('numberofscans1', 'value'),
-               State('bigpictureplot1', 'figure')])
-def plotbank1(replot1, bigpictureclickdata1, file1, llcbuffer, bigpictureplot):
-    return plotbank(replot1, bigpictureclickdata1, file1, llcbuffer, bigpictureplot)
+               State('bigpictureplot1','figure')])
+def plotbank1(replot1, bigpictureclickdata1, llcbuffer1, file1, bigpicture1):
+    return plotbank(replot1, bigpictureclickdata1, file1, llcbuffer1, bigpicture1)
