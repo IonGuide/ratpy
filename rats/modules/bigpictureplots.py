@@ -16,12 +16,10 @@ def bigpictureplot(df, timescale=1000000):
     fig = px.scatter(df, x='time', y='function', color='colours', hover_data=['llc'], title=title)
     return fig
 
-
 def test_case(absolutepath):
     import pickle
     testclass = ratparser.RatParse(absolutepath)
     df = testclass.dataframeoutput()
-    print(df.head())
     fig = bigpictureplot(df)
 
     with open('figurepickletest.pickle', 'wb') as f:

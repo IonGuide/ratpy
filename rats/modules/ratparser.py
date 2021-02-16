@@ -354,7 +354,7 @@ class RatParse:
         # ==============================================================================================================
         print(f'Dataframe construction completed in: {datetime.now() - starttime}')
         print(f'dataframe for {self.filename} uses {df.memory_usage().sum() / 10e6} Mb in memory')
-
+        print(f'HEAD OF DF PARSED FOR {file}:')
         print(df.head())
 
         return df

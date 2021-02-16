@@ -110,10 +110,6 @@ def plotbank(replot, bigpictureclickdata, file, scans, bigpictureplot):
     except Exception:
         # if there are no figures in storage, make them and save them
         df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
-        print(str(packagepath) + dfpath + f'{file}.feather')
-        print(df.head())
-
-        print(df.head())
         bp = bigpictureplots.bigpictureplot(df)
         s = scopeplots.scopeplot(df, buffer=scans)
         figs = dict(bigpictureplot=bp, scopeplot=s)

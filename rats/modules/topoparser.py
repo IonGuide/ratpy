@@ -10,14 +10,23 @@ packagepath = pathlib.Path(__file__).parent.parent.resolve()
 
 
 def extractscale(netid, edbs):
+
+    print("NETID")
+    print(netid)
     edbs.remove(31)
     # need to organically identify the topo file
     import os
-    for filename in os.listdir(str(packagepath) + topopath):
-        if 'NETWORK' in filename and 'xml' in filename:
-            topofile = filename
-        else:
-            return 'There was no topofile in the expected place with the expected name'
+    print('FILES FOUND IN TOPO DIRECTORY:')
+    try:
+        for filename in os.listdir(str(packagepath) + topopath):
+            print(filename)
+            if 'NETWORK' in filename and 'xml' in filename:
+                print("FOUND TOPOFILE")
+                topofile = filename
+    except Exception as e:
+        print('NONE')
+        print(e)
+
 
     with open(str(packagepath) + topopath + topofile, 'r') as f:
         content = f.readlines()
@@ -52,8 +61,6 @@ def extractscale(netid, edbs):
             scaled data = min + (data * -res)
         '''
         scalingfactor[edb] = abs((int(data['maxvalue']) - int(data['minvalue']))) / res
-        print('=' * 20)
-        print(scalingfactor)
         if int(data['maxvalue']) < int(data['minvalue']):
             # invert this so that 'min' + scaling factor will decrement
             scalingfactor[int(f"{edb}")] = (scalingfactor[int(f"{edb}")]) * -1
