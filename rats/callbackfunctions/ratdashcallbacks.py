@@ -110,6 +110,8 @@ def plotbank(replot, bigpictureclickdata, file, scans, bigpictureplot):
     except Exception:
         # if there are no figures in storage, make them and save them
         df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
+        print(str(packagepath) + dfpath + f'{file}.feather')
+        print(df.head())
 
         print(df.head())
         bp = bigpictureplots.bigpictureplot(df)
@@ -121,16 +123,15 @@ def plotbank(replot, bigpictureclickdata, file, scans, bigpictureplot):
     # PLOT LINKAGES
     # ========================================================
     if bigpictureclickdata is not None:
+        print('DATA SELECTED FROM BIGPICTURE:')
         print(f'bigpicture click data: {bigpictureclickdata}')
         # do relevant operations if we have clicked big picture
         # update scope plot here
         df = pd.read_feather(str(packagepath) + dfpath + f'{file}.feather')
-
         start = bigpictureclickdata['points'][0]['customdata'][0]
         print(f'start: {start}')
         scopeplot = scopeplots.scopeplot(df, llc=start, buffer=scans)
         figs['scopeplot'] = scopeplot
-        figs['bigpictureplot'] = bigpictureplot
         # save out modifications
 
         with open(str(packagepath) + figurepath + f'{file}_ratdashfigures.pickle', 'wb') as f:
@@ -178,8 +179,8 @@ def pulldata(click):
               [State('fileselect0', 'value'),
                State('numberofscans0', 'value'),
                State('bigpictureplot0', 'figure')])
-def plotbank0(replot0, bigpictureclickdata, file0, llcbuffer, bigpictureplot):
-    return plotbank(replot0, bigpictureclickdata, file0, llcbuffer, bigpictureplot)
+def plotbank0(replot0, bigpictureclickdata0, file0, llcbuffer, bigpictureplot):
+    return plotbank(replot0, bigpictureclickdata0, file0, llcbuffer, bigpictureplot)
 
 
 # ======================================================================================================================
@@ -192,5 +193,5 @@ def plotbank0(replot0, bigpictureclickdata, file0, llcbuffer, bigpictureplot):
               [State('fileselect1', 'value'),
                State('numberofscans1', 'value'),
                State('bigpictureplot1', 'figure')])
-def plotbank1(replot1, bigpictureclickdata, file1, llcbuffer, bigpictureplot):
-    return plotbank(replot1, bigpictureclickdata, file1, llcbuffer, bigpictureplot)
+def plotbank1(replot1, bigpictureclickdata1, file1, llcbuffer, bigpictureplot):
+    return plotbank(replot1, bigpictureclickdata1, file1, llcbuffer, bigpictureplot)
