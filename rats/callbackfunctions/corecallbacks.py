@@ -243,21 +243,21 @@ def preprocessdata(click):
         # all manipulation of sessionfilenames dataframe is now complete...
         print(errormessage)
 
-        rdbutton = html.Button(id='pulldataratdash', children='Pull the data into ratdash',
+        rdbutton = html.Button(id='pulldataratdash', children='Pull the data into Big Picture app',
                                className='btn btn-secondary', type='button')
-        sbutton = html.Button(id='pulldatascope', children='Pull the data into scope app',
+        sbutton = html.Button(id='pulldatascope', children='Pull the data into Scope app',
                               className='btn btn-secondary', type='button')
-        ibutton = html.Button(id='pulldatainterscan', children='Pull the data into interscan app',
+        ibutton = html.Button(id='pulldatainterscan', children='Pull the data into Interscan app',
                               className='btn btn-secondary', type='button')
 
         return children, html.Div([errormessage], id='errorlog', className='col'), rdbutton, sbutton, ibutton
     except Exception:
         print('epic fail')
-        rdbutton = html.Button(id='pulldataratdash', children='Pull the data into ratdash',
+        rdbutton = html.Button(id='pulldataratdash', children='Pull the data into Big Picture app',
                                className='btn btn-secondary', type='button')
-        sbutton = html.Button(id='pulldatascope', children='Pull the data into scope app',
+        sbutton = html.Button(id='pulldatascope', children='Pull the data into Scope app',
                               className='btn btn-secondary', type='button')
-        ibutton = html.Button(id='pulldatainterscan', children='Pull the data into interscan app',
+        ibutton = html.Button(id='pulldatainterscan', children='Pull the data into Interscan app',
                               className='btn btn-secondary', type='button')
         return [], 'failed to preprocess data', rdbutton, sbutton, ibutton
         pass
