@@ -9,24 +9,16 @@ else:
 packagepath = pathlib.Path(__file__).parent.parent.resolve()
 
 
-def extractscale(netid, edbs):
-
-    print("NETID")
-    print(netid)
+def extractscale(netid, edblist):
+    edbs = [i for i in edblist] # stop this modifying core attribute of class
     edbs.remove(31)
     # need to organically identify the topo file
     import os
-    print('FILES FOUND IN TOPO DIRECTORY:')
-    try:
-        for filename in os.listdir(str(packagepath) + topopath):
-            print(filename)
-            if 'NETWORK' in filename and 'xml' in filename:
-                print("FOUND TOPOFILE")
-                topofile = filename
-    except Exception as e:
-        print('NONE')
-        print(e)
-
+    for filename in os.listdir(str(packagepath) + topopath):
+        if 'NETWORK' in filename and 'xml' in filename:
+            topofile = filename
+        else:
+            f'{filename} checked'
 
     with open(str(packagepath) + topopath + topofile, 'r') as f:
         content = f.readlines()
@@ -39,6 +31,7 @@ def extractscale(netid, edbs):
     units = {}
     scalingfactor = {}
     minimum = {}
+    bytesdict = {}
 
     with open(str(packagepath) + topopath + f'DEVICE_{device["type"]}_{device["variant"]}.xml', 'r') as f:
         content = f.readlines()
@@ -51,8 +44,10 @@ def extractscale(netid, edbs):
         description[edb] = data['description']
         units[edb] = data['unit']
         minimum[edb] = int(data['minvalue'])
-        bits = int(data['dataformat'].split('Q')[1]) + 1
+        bits = int(data['dataformat'].split('Q')[1]) + 1 # if q15, will be interpreted as 16 bit number, for example
         res = 2 ** bits
+        bytesdict[edb] = int(bits/4)
+
         '''
         apply this with following logic; 
         if min < max;
@@ -70,10 +65,11 @@ def extractscale(netid, edbs):
         units[31] = 'SIP'
         scalingfactor[31] = 0
         minimum[31] = 0
+        bytesdict[31] = 4 # assumes 2 bytes in the EDB 31 output... Standard for now. Could be replaced with config values
 
-    scalingfactors = dict(descriptions=description, units=units, minimum=minimum, scalingfactor=scalingfactor)
+    scalingfactors = dict(descriptions=description, units=units, minimum=minimum, scalingfactor=scalingfactor, bytes=bytesdict)
 
-    return scalingfactors, board
+    return scalingfactors, board #maybe split these out in the class...
 
 
 def testcase(netid, e):
@@ -81,5 +77,4 @@ def testcase(netid, e):
     return output
 
 
-edblist = ['2', '10', '15', '20', '31']
-# testcase('5',edblist)
+
