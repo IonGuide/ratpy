@@ -27,19 +27,3 @@ def scopeplot(df, llc=0, buffer=1, facet=False, timescale=1000000):
     fig.update_traces(mode='markers+lines', marker=dict(size=4))
 
     return fig
-
-
-def test_case(file, absolutepath):
-    try:
-        df = pd.read_feather(f'../feathereddataframes/{file}.feather')
-    except Exception:
-        print('df not found')
-        filename = absolutepath
-        testclass = ratparser.RatParse(filename)
-        df = testclass.dataframeoutput()
-
-    scopeplot(df, llc=30, buffer=2, facet=True).show()
-
-
-file = 'RATS simulation 1595852200.txt'
-# test_case(file,f'/users/steve/documents/workwaters/{file}')

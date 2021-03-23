@@ -138,8 +138,8 @@ def preprocessdata(click):
             # should be a case of now reading this file in from cache instead of from some absolute path...
             parser = ratparser.RatParse(str(packagepath) + cachepath + f'{i}')
             # soomething's going wrong here when reading file back in from cache
-            if parser.verifyfile():
-                df = parser.dataframeoutput()
+            if parser.verified:
+                df = parser.dataframe
                 df.to_feather(str(packagepath) + dfpath + f'{i}.feather')
             else:
                 # remove the filename from the session and the file from the cache
